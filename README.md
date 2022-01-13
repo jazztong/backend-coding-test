@@ -31,6 +31,7 @@ Below will be your set of tasks to accomplish. Please work on each of these task
       - [Success Criteria](#success-criteria-4)
   - [Enhancement of README](#enhancement-of-readme)
     - [Generate Swagger spec file](#generate-swagger-spec-file)
+    - [Swagger endpoint](#swagger-endpoint)
 
 ### Documentation
 
@@ -116,3 +117,7 @@ Please implement load testing to ensure your service can handle a high amount of
 ### Generate Swagger spec file
 
 Run `npm run swagger-autogen` to generate latest file and immediate start project. To learn how to automate detect and write spec from api, refer `https://www.npmjs.com/package/swagger-autogen`
+
+### Swagger endpoint
+
+Run `npm start` and open `localhost:8010/api-docs`
