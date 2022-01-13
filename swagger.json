@@ -1,0 +1,113 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "version": "2.0",
+    "title": "Ride API",
+    "description": "API that CRUD Ride information"
+  },
+  "host": "localhost:8010",
+  "basePath": "",
+  "tags": [
+    {
+      "name": "Ride",
+      "description": "Ride information that container ride and rider detail"
+    }
+  ],
+  "schemes": [],
+  "securityDefinitions": {},
+  "paths": {
+    "/health": {
+      "get": {
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/rides": {
+      "post": {
+        "tags": [
+          "Rides"
+        ],
+        "description": "Endpoint to add a new ride.",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "start_lat": {
+                  "example": "any"
+                },
+                "start_long": {
+                  "example": "any"
+                },
+                "end_lat": {
+                  "example": "any"
+                },
+                "end_long": {
+                  "example": "any"
+                },
+                "rider_name": {
+                  "example": "any"
+                },
+                "driver_name": {
+                  "example": "any"
+                },
+                "driver_vehicle": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ride creation successfully."
+          },
+          "404": {
+            "description": "Fail to create Ride"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Rides"
+        ],
+        "description": "Endpoint to list all rides.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/rides/{id}": {
+      "get": {
+        "tags": [
+          "Rides"
+        ],
+        "description": "Endpoint to return ride by ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "User ID."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  }
+}

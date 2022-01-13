@@ -10,6 +10,10 @@ module.exports = (db) => {
   app.get("/health", (req, res) => res.send("Healthy"));
 
   app.post("/rides", jsonParser, (req, res) => {
+    /*  
+    #swagger.tags = ['Rides']
+    #swagger.description = 'Endpoint to add a new ride.' 
+    */
     const startLatitude = Number(req.body.start_lat);
     const startLongitude = Number(req.body.start_long);
     const endLatitude = Number(req.body.end_lat);
@@ -91,12 +95,13 @@ module.exports = (db) => {
           this.lastID,
           function (err, rows) {
             if (err) {
+              // #swagger.responses[404] = {description: 'Fail to create Ride'}
               return res.send({
                 error_code: "SERVER_ERROR",
                 message: "Unknown error",
               });
             }
-
+            // #swagger.responses[200] = { description: 'Ride creation successfully.' }
             res.send(rows);
           }
         );
@@ -105,6 +110,10 @@ module.exports = (db) => {
   });
 
   app.get("/rides", (req, res) => {
+    /*  
+    #swagger.tags = ['Rides']
+    #swagger.description = 'Endpoint to list all rides.' 
+    */
     db.all("SELECT * FROM Rides", function (err, rows) {
       if (err) {
         return res.send({
@@ -125,6 +134,16 @@ module.exports = (db) => {
   });
 
   app.get("/rides/:id", (req, res) => {
+    /*  
+    #swagger.tags = ['Rides']
+    #swagger.description = 'Endpoint to return ride by ID.' 
+    */
+    /*  #swagger.parameters['id'] = {
+                in: 'path',
+                description: 'User ID.',
+                required: true
+            }
+    */
     db.all(
       `SELECT * FROM Rides WHERE rideID='${req.params.id}'`,
       function (err, rows) {
