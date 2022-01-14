@@ -14,6 +14,10 @@ const buildSchemas = require("./src/schemas");
 
 const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("./swagger.json");
+
+const winston = require("winston");
+const expressWinston = require("express-winston");
+
 db.serialize(() => {
   buildSchemas(db);
 

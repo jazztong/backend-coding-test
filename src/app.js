@@ -5,8 +5,11 @@ const app = express();
 
 const bodyParser = require("body-parser");
 const jsonParser = bodyParser.json();
+const middleware = require("./middleware");
 
 module.exports = (db) => {
+  middleware.requestLogging(app);
+
   app.get("/health", (req, res) => res.send("Healthy"));
 
   app.post("/rides", jsonParser, (req, res) => {
@@ -165,6 +168,8 @@ module.exports = (db) => {
       }
     );
   });
+
+  middleware.errorLogging(app);
 
   return app;
 };
