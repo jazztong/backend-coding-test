@@ -68,9 +68,6 @@
         "responses": {
           "200": {
             "description": "Ride creation successfully."
-          },
-          "404": {
-            "description": "Fail to create Ride"
           }
         }
       },
@@ -79,10 +76,26 @@
           "Rides"
         ],
         "description": "Endpoint to list all rides.",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "page",
+            "description": "Page number to query",
+            "type": "number",
+            "in": "query"
+          },
+          {
+            "name": "limit",
+            "description": "Result limit per page to query",
+            "type": "number",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Query all rides with pagination success.",
+            "schema": {
+              "$ref": "#/definitions/rides"
+            }
           }
         }
       }
@@ -104,8 +117,60 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Query ride by id success.",
+            "schema": {
+              "$ref": "#/definitions/ride"
+            }
           }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "rides": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ride"
+      }
+    },
+    "ride": {
+      "type": "object",
+      "properties": {
+        "rideID": {
+          "type": "number",
+          "example": 3
+        },
+        "startLat": {
+          "type": "number",
+          "example": 89
+        },
+        "startLong": {
+          "type": "number",
+          "example": 24
+        },
+        "endLat": {
+          "type": "number",
+          "example": 10
+        },
+        "endLong": {
+          "type": "number",
+          "example": 14
+        },
+        "riderName": {
+          "type": "string",
+          "example": "Mr Tan"
+        },
+        "driverName": {
+          "type": "string",
+          "example": "Mr DIY"
+        },
+        "driverVehicle": {
+          "type": "string",
+          "example": "Car"
+        },
+        "created": {
+          "type": "string",
+          "example": "2022-01-15 09:26:57"
         }
       }
     }
