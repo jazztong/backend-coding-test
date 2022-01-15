@@ -1,29 +1,29 @@
-"use strict";
+'use strict'
 
-const express = require("express");
-const app = express();
+const express = require('express')
+const app = express()
 
-const bodyParser = require("body-parser");
-const jsonParser = bodyParser.json();
-const middleware = require("./middleware");
+const bodyParser = require('body-parser')
+const jsonParser = bodyParser.json()
+const middleware = require('./middleware')
 
 module.exports = (db) => {
-  middleware.requestLogging(app);
+  middleware.requestLogging(app)
 
-  app.get("/health", (req, res) => res.send("Healthy"));
+  app.get('/health', (req, res) => res.send('Healthy'))
 
-  app.post("/rides", jsonParser, (req, res) => {
-    /*  
+  app.post('/rides', jsonParser, (req, res) => {
+    /*
     #swagger.tags = ['Rides']
-    #swagger.description = 'Endpoint to add a new ride.' 
+    #swagger.description = 'Endpoint to add a new ride.'
     */
-    const startLatitude = Number(req.body.start_lat);
-    const startLongitude = Number(req.body.start_long);
-    const endLatitude = Number(req.body.end_lat);
-    const endLongitude = Number(req.body.end_long);
-    const riderName = req.body.rider_name;
-    const driverName = req.body.driver_name;
-    const driverVehicle = req.body.driver_vehicle;
+    const startLatitude = Number(req.body.start_lat)
+    const startLongitude = Number(req.body.start_long)
+    const endLatitude = Number(req.body.end_lat)
+    const endLongitude = Number(req.body.end_long)
+    const riderName = req.body.rider_name
+    const driverName = req.body.driver_name
+    const driverVehicle = req.body.driver_vehicle
 
     if (
       startLatitude < -90 ||
@@ -32,10 +32,10 @@ module.exports = (db) => {
       startLongitude > 180
     ) {
       return res.send({
-        error_code: "VALIDATION_ERROR",
+        error_code: 'VALIDATION_ERROR',
         message:
-          "Start latitude and longitude must be between -90 - 90 and -180 to 180 degrees respectively",
-      });
+          'Start latitude and longitude must be between -90 - 90 and -180 to 180 degrees respectively'
+      })
     }
 
     if (
@@ -45,101 +45,101 @@ module.exports = (db) => {
       endLongitude > 180
     ) {
       return res.send({
-        error_code: "VALIDATION_ERROR",
+        error_code: 'VALIDATION_ERROR',
         message:
-          "End latitude and longitude must be between -90 - 90 and -180 to 180 degrees respectively",
-      });
+          'End latitude and longitude must be between -90 - 90 and -180 to 180 degrees respectively'
+      })
     }
 
-    if (typeof riderName !== "string" || riderName.length < 1) {
+    if (typeof riderName !== 'string' || riderName.length < 1) {
       return res.send({
-        error_code: "VALIDATION_ERROR",
-        message: "Rider name must be a non empty string",
-      });
+        error_code: 'VALIDATION_ERROR',
+        message: 'Rider name must be a non empty string'
+      })
     }
 
-    if (typeof driverName !== "string" || driverName.length < 1) {
+    if (typeof driverName !== 'string' || driverName.length < 1) {
       return res.send({
-        error_code: "VALIDATION_ERROR",
-        message: "Driver name must be a non empty string",
-      });
+        error_code: 'VALIDATION_ERROR',
+        message: 'Driver name must be a non empty string'
+      })
     }
 
-    if (typeof driverVehicle !== "string" || driverVehicle.length < 1) {
+    if (typeof driverVehicle !== 'string' || driverVehicle.length < 1) {
       return res.send({
-        error_code: "VALIDATION_ERROR",
-        message: "Driver Vehicle must be a non empty string",
-      });
+        error_code: 'VALIDATION_ERROR',
+        message: 'Driver Vehicle must be a non empty string'
+      })
     }
 
-    var values = [
+    const values = [
       req.body.start_lat,
       req.body.start_long,
       req.body.end_lat,
       req.body.end_long,
       req.body.rider_name,
       req.body.driver_name,
-      req.body.driver_vehicle,
-    ];
+      req.body.driver_vehicle
+    ]
 
-    const result = db.run(
-      "INSERT INTO Rides(startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    db.run(
+      'INSERT INTO Rides(startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle) VALUES (?, ?, ?, ?, ?, ?, ?)',
       values,
       function (err) {
         if (err) {
           return res.send({
-            error_code: "SERVER_ERROR",
-            message: "Unknown error",
-          });
+            error_code: 'SERVER_ERROR',
+            message: 'Unknown error'
+          })
         }
 
         db.all(
-          "SELECT * FROM Rides WHERE rideID = ?",
+          'SELECT * FROM Rides WHERE rideID = ?',
           this.lastID,
           function (err, rows) {
             if (err) {
               // #swagger.responses[404] = {description: 'Fail to create Ride'}
               return res.send({
-                error_code: "SERVER_ERROR",
-                message: "Unknown error",
-              });
+                error_code: 'SERVER_ERROR',
+                message: 'Unknown error'
+              })
             }
             // #swagger.responses[200] = { description: 'Ride creation successfully.' }
-            res.send(rows);
+            res.send(rows)
           }
-        );
+        )
       }
-    );
-  });
+    )
+  })
 
-  app.get("/rides", (req, res) => {
-    /*  
+  app.get('/rides', (req, res) => {
+    /*
     #swagger.tags = ['Rides']
-    #swagger.description = 'Endpoint to list all rides.' 
+    #swagger.description = 'Endpoint to list all rides.'
     */
-    db.all("SELECT * FROM Rides", function (err, rows) {
+    db.all('SELECT * FROM Rides', function (err, rows) {
       if (err) {
         return res.send({
-          error_code: "SERVER_ERROR",
-          message: "Unknown error",
-        });
+          error_code: 'SERVER_ERROR',
+          message: 'Unknown error'
+        })
       }
 
       if (rows.length === 0) {
         return res.send({
-          error_code: "RIDES_NOT_FOUND_ERROR",
-          message: "Could not find any rides",
-        });
+          error_code: 'RIDES_NOT_FOUND_ERROR',
+          message: 'Could not find any rides'
+        })
       }
 
-      res.send(rows);
-    });
-  });
+      res.send(rows)
+    })
+  })
 
-  app.get("/rides/:id", (req, res) => {
-    /*  
+  app.get('/rides/:id', (req, res) => {
+    /*
     #swagger.tags = ['Rides']
-    #swagger.description = 'Endpoint to return ride by ID.' 
+    #swagger.description = 'Endpoint to return ride by ID.'
     */
     /*  #swagger.parameters['id'] = {
                 in: 'path',
@@ -152,24 +152,24 @@ module.exports = (db) => {
       function (err, rows) {
         if (err) {
           return res.send({
-            error_code: "SERVER_ERROR",
-            message: "Unknown error",
-          });
+            error_code: 'SERVER_ERROR',
+            message: 'Unknown error'
+          })
         }
 
         if (rows.length === 0) {
           return res.send({
-            error_code: "RIDES_NOT_FOUND_ERROR",
-            message: "Could not find any rides",
-          });
+            error_code: 'RIDES_NOT_FOUND_ERROR',
+            message: 'Could not find any rides'
+          })
         }
 
-        res.send(rows);
+        res.send(rows)
       }
-    );
-  });
+    )
+  })
 
-  middleware.errorLogging(app);
+  middleware.errorLogging(app)
 
-  return app;
-};
+  return app
+}
