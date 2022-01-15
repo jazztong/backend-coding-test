@@ -112,15 +112,53 @@ describe('API tests', () => {
 
   describe('GET /rides', () => {
     before((done) => {
-      request(app).post('/rides').send(mainFake).end(done)
+      db.parallelize((err) => {
+        if (err) {
+          return done(err)
+        }
+        db.run('DELETE from Rides')
+        // setup 15 ride
+        // TODO: Can be improve with flat insert script
+        for (let index = 0; index < 15; index++) {
+          db.run(
+            'INSERT INTO Rides(startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            Object.values(mainFake)
+          )
+        }
+        done()
+      })
     })
-    it('should return all rides', (done) => {
+    it('should return all rides with default page and limit', (done) => {
       request(app)
         .get('/rides')
         .expect('Content-Type', /json/)
         .expect(200)
         .expect((res) => {
-          assertRide(res.body[0], mainFake)
+          assert.strictEqual(res.body.hasNext, true)
+          assert.strictEqual(res.body.totalCount, 15)
+          assert.strictEqual(res.body.currentPage, 1)
+          assert.strictEqual(res.body.results.length, 10)
+          assertRide(res.body.results[0], mainFake)
+        })
+        .end(done)
+    })
+    it('should return all rides with page 2 and limit 2', (done) => {
+      request(app)
+        .get('/rides?page=2&limit=2')
+        .expect((res) => {
+          assert.strictEqual(res.body.hasNext, true)
+          assert.strictEqual(res.body.currentPage, 2)
+          assert.strictEqual(res.body.results.length, 2)
+        })
+        .end(done)
+    })
+    it('should return all rides with page 15 and limit 1', (done) => {
+      request(app)
+        .get('/rides?page=15&limit=1')
+        .expect((res) => {
+          assert.strictEqual(res.body.hasNext, false)
+          assert.strictEqual(res.body.currentPage, 15)
+          assert.strictEqual(res.body.results.length, 1)
         })
         .end(done)
     })
@@ -137,6 +175,25 @@ describe('API tests', () => {
         .expect(200, {
           error_code: 'RIDES_NOT_FOUND_ERROR',
           message: 'Could not find any rides'
+        })
+        .end(done)
+    })
+    it('should return invalid page number', (done) => {
+      request(app)
+        .get('/rides?page=-1')
+        .expect(200, {
+          error_code: 'INVALID_PAGE_NUMBER',
+          message: 'Page number should be a number and not be less than 1'
+        })
+        .end(done)
+    })
+    it('should return invalid page number', (done) => {
+      request(app)
+        .get('/rides?limit=ff')
+        .expect(200, {
+          error_code: 'INVALID_PAGE_LIMIT_NUMBER',
+          message:
+            'Page limit number should be a number and not be less than 1, and must not greater than 1000'
         })
         .end(done)
     })

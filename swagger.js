@@ -20,7 +20,24 @@ const doc = {
     // { ... }
   ],
   securityDefinitions: {}, // by default: empty object (Swagger 2.0)
-  definitions: {}, // by default: empty object
+  definitions: {
+    rides: [
+      {
+        $ref: '#/definitions/ride'
+      }
+    ],
+    ride: {
+      rideID: 3,
+      startLat: 89,
+      startLong: 24,
+      endLat: 10,
+      endLong: 14,
+      riderName: 'Mr Tan',
+      driverName: 'Mr DIY',
+      driverVehicle: 'Car',
+      created: '2022-01-15 09:26:57'
+    }
+  }, // by default: empty object
   components: {} // by default: empty object (OpenAPI 3.x)
 }
 

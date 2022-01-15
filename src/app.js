@@ -98,7 +98,6 @@ module.exports = (db) => {
           this.lastID,
           function (err, rows) {
             if (err) {
-              // #swagger.responses[404] = {description: 'Fail to create Ride'}
               return res.send({
                 error_code: 'SERVER_ERROR',
                 message: 'Unknown error'
@@ -116,24 +115,59 @@ module.exports = (db) => {
     /*
     #swagger.tags = ['Rides']
     #swagger.description = 'Endpoint to list all rides.'
+    #swagger.parameters['page'] = { description: 'Page number to query',type:'number' }
+    #swagger.parameters['limit'] = { description: 'Result limit per page to query',type:'number' }
     */
-    db.all('SELECT * FROM Rides', function (err, rows) {
-      if (err) {
-        return res.send({
-          error_code: 'SERVER_ERROR',
-          message: 'Unknown error'
+    const { page = 1, limit = 10 } = req.query
+    if (isNaN(page) || page < 1) {
+      return res.send({
+        error_code: 'INVALID_PAGE_NUMBER',
+        message: 'Page number should be a number and not be less than 1'
+      })
+    }
+    if (isNaN(limit) || limit < 1 || limit >= 1000) {
+      return res.send({
+        error_code: 'INVALID_PAGE_LIMIT_NUMBER',
+        message:
+          'Page limit number should be a number and not be less than 1, and must not greater than 1000'
+      })
+    }
+    const offset = (page - 1) * limit // SQLite offset is last row of last page
+    db.all(
+      'SELECT * FROM Rides LIMIT ? OFFSET ?',
+      [limit, offset],
+      function (err, rows) {
+        if (err) {
+          return res.send({
+            error_code: 'SERVER_ERROR',
+            message: 'Unknown error'
+          })
+        }
+
+        if (rows.length === 0) {
+          return res.send({
+            error_code: 'RIDES_NOT_FOUND_ERROR',
+            message: 'Could not find any rides'
+          })
+        }
+        db.all('SELECT COUNT(*) as count FROM Rides', (err, countRow) => {
+          if (err) {
+            throw err
+          }
+          const totalCount = countRow[0].count
+          res.send({
+            hasNext: Number(page) * Number(limit) < Number(totalCount),
+            totalCount: Number(totalCount),
+            currentPage: Number(page),
+            results: rows
+          })
+          /* #swagger.responses[200] = {
+            description: 'Query all rides with pagination success.',
+            schema: {$ref: '#/definitions/rides'}
+          } */
         })
       }
-
-      if (rows.length === 0) {
-        return res.send({
-          error_code: 'RIDES_NOT_FOUND_ERROR',
-          message: 'Could not find any rides'
-        })
-      }
-
-      res.send(rows)
-    })
+    )
   })
 
   app.get('/rides/:id', (req, res) => {
@@ -163,7 +197,10 @@ module.exports = (db) => {
             message: 'Could not find any rides'
           })
         }
-
+        /* #swagger.responses[200] = {
+            description: 'Query ride by id success.',
+            schema: {$ref: '#/definitions/ride'}
+          } */
         res.send(rows)
       }
     )
