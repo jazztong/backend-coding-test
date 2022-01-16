@@ -4,6 +4,7 @@ const request = require('supertest')
 const assert = require('assert')
 const sqlite3 = require('sqlite3').verbose()
 const { open } = require('sqlite')
+const logger = require('../src/logger')
 let db, app
 const buildSchemas = require('../src/schemas')
 const mainFake = {
@@ -28,6 +29,7 @@ const assertRide = function (actual, expect) {
 
 describe('API tests', () => {
   before(async () => {
+    logger.silent = true
     db = await open({
       filename: ':memory:',
       driver: sqlite3.Database
