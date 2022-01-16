@@ -3,11 +3,9 @@
 const request = require('supertest')
 const assert = require('assert')
 const sqlite3 = require('sqlite3').verbose()
-const db = new sqlite3.Database(':memory:')
-
-const app = require('../src/app')(db)
+const { open } = require('sqlite')
+let db, app
 const buildSchemas = require('../src/schemas')
-
 const mainFake = {
   start_lat: 89,
   start_long: 24,
@@ -29,18 +27,14 @@ const assertRide = function (actual, expect) {
 }
 
 describe('API tests', () => {
-  before((done) => {
-    db.serialize((err) => {
-      if (err) {
-        return done(err)
-      }
-
-      buildSchemas(db)
-
-      done()
+  before(async () => {
+    db = await open({
+      filename: ':memory:',
+      driver: sqlite3.Database
     })
+    await buildSchemas(db)
+    app = require('../src/app')(db)
   })
-
   describe('GET /health', () => {
     it('should return health', (done) => {
       request(app)
@@ -111,22 +105,14 @@ describe('API tests', () => {
   })
 
   describe('GET /rides', () => {
-    before((done) => {
-      db.parallelize((err) => {
-        if (err) {
-          return done(err)
-        }
-        db.run('DELETE from Rides')
-        // setup 15 ride
-        // TODO: Can be improve with flat insert script
-        for (let index = 0; index < 15; index++) {
-          db.run(
-            'INSERT INTO Rides(startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            Object.values(mainFake)
-          )
-        }
-        done()
-      })
+    before(async () => {
+      await db.run('DELETE from Rides')
+      for (let index = 0; index < 15; index++) {
+        await db.run(
+          'INSERT INTO Rides(startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          Object.values(mainFake)
+        )
+      }
     })
     it('should return all rides with default page and limit', (done) => {
       request(app)
@@ -165,8 +151,8 @@ describe('API tests', () => {
   })
 
   describe('GET error /rides', () => {
-    before((done) => {
-      db.run('DELETE from Rides', done)
+    before(async () => {
+      await db.run('DELETE from Rides')
     })
     it('should return rider not found', (done) => {
       request(app)
