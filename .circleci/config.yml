@@ -26,10 +26,15 @@ jobs:
           key: node-deps-v1-{{ .Branch }}-{{checksum "package-lock.json"}}
           paths:
             - ~/.npm
+      - run: mkdir ~/junit
       - run:
           name: Run Tests
           command: npm run test
+          environment:
+            MOCHA_FILE: ~/junit/test-results.xml
       - store_test_results:
+          path: ~/junit
+      - store_artifacts:
           path: ~/junit
 
 # Invoke jobs via workflows
