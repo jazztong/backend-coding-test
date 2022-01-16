@@ -8,13 +8,14 @@
   },
   "scripts": {
     "coverage": "nyc npm run test",
-    "lint": "eslint",
+    "lint": "eslint --fix .",
     "test": "nyc mocha tests",
     "start": "node index.js",
     "swagger-autogen": "node ./swagger.js"
   },
   "pre-push": [
-    "test"
+    "test",
+    "lint"
   ],
   "keywords": [
     "Xendit"

@@ -6,7 +6,7 @@ const RideRepository = require('./rider-repository')
 const bodyParser = require('body-parser')
 const jsonParser = bodyParser.json()
 const middleware = require('./middleware')
-var helmet = require('helmet')
+const helmet = require('helmet')
 
 module.exports = (db) => {
   const repository = new RideRepository(db)
