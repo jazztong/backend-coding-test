@@ -26,16 +26,16 @@ jobs:
           key: node-deps-v1-{{ .Branch }}-{{checksum "package-lock.json"}}
           paths:
             - ~/.npm
-      - run: mkdir ~/junit
       - run:
           name: Run Tests
           command: npm run test
           environment:
-            MOCHA_FILE: ~/junit/test-results.xml
+            MOCHA_FILE: junit/test-results.xml
+      - run: echo $PWD && ls
       - store_test_results:
-          path: ~/junit
+          path: junit
       - store_artifacts:
-          path: ~/junit
+          path: junit
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
