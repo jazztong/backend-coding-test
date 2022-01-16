@@ -11,6 +11,7 @@
     "lint": "eslint --fix .",
     "test": "nyc mocha tests",
     "start": "node index.js",
+    "test:load": "artillery run load-test.yml",
     "swagger-autogen": "node ./swagger.js"
   },
   "pre-push": [
@@ -33,6 +34,7 @@
     "winston": "^3.4.0"
   },
   "devDependencies": {
+    "artillery": "1.6.1",
     "eslint": "^7.32.0",
     "eslint-config-standard": "^16.0.3",
     "eslint-plugin-import": "^2.25.4",
