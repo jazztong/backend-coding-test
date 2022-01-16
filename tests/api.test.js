@@ -40,6 +40,15 @@ describe('API tests', () => {
       request(app)
         .get('/health')
         .expect('Content-Type', /text/)
+        .expect('X-DNS-Prefetch-Control', 'off')
+        .expect('X-Download-Options', 'noopen')
+        .expect('X-Content-Type-Options', 'nosniff')
+        .expect('X-XSS-Protection', '0')
+        .expect('Expect-CT', 'max-age=0')
+        .expect(
+          'Content-Security-Policy',
+          `default-src 'self';base-uri 'self';block-all-mixed-content;font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests`
+        )
         .expect(200, done)
     })
   })

@@ -6,10 +6,12 @@ const RideRepository = require('./rider-repository')
 const bodyParser = require('body-parser')
 const jsonParser = bodyParser.json()
 const middleware = require('./middleware')
+var helmet = require('helmet')
 
 module.exports = (db) => {
   const repository = new RideRepository(db)
-
+  app.use(helmet())
+  middleware.enableSecureHeader(app)
   middleware.requestLogging(app)
 
   app.get('/health', (req, res) => res.send('Healthy'))
