@@ -2,17 +2,19 @@
 
 const express = require('express')
 const app = express()
-
+const RideRepository = require('./rider-repository')
 const bodyParser = require('body-parser')
 const jsonParser = bodyParser.json()
 const middleware = require('./middleware')
 
 module.exports = (db) => {
+  const repository = new RideRepository(db)
+
   middleware.requestLogging(app)
 
   app.get('/health', (req, res) => res.send('Healthy'))
 
-  app.post('/rides', jsonParser, (req, res) => {
+  app.post('/rides', jsonParser, async (req, res) => {
     /*
     #swagger.tags = ['Rides']
     #swagger.description = 'Endpoint to add a new ride.'
@@ -72,105 +74,75 @@ module.exports = (db) => {
       })
     }
 
-    const values = [
-      req.body.start_lat,
-      req.body.start_long,
-      req.body.end_lat,
-      req.body.end_long,
-      req.body.rider_name,
-      req.body.driver_name,
-      req.body.driver_vehicle
-    ]
-
-    db.run(
-      'INSERT INTO Rides(startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      values,
-      function (err) {
-        if (err) {
-          return res.send({
-            error_code: 'SERVER_ERROR',
-            message: 'Unknown error'
-          })
-        }
-
-        db.all(
-          'SELECT * FROM Rides WHERE rideID = ?',
-          this.lastID,
-          function (err, rows) {
-            if (err) {
-              return res.send({
-                error_code: 'SERVER_ERROR',
-                message: 'Unknown error'
-              })
-            }
-            // #swagger.responses[200] = { description: 'Ride creation successfully.' }
-            res.send(rows)
-          }
-        )
-      }
-    )
+    try {
+      const result = await repository.add({
+        startLat: startLatitude,
+        startLong: startLongitude,
+        endLat: endLatitude,
+        endLong: endLongitude,
+        riderName: riderName,
+        driverName: driverName,
+        driverVehicle: driverVehicle
+      })
+      res.send(result)
+    } catch (error) {
+      return res.send({
+        error_code: 'SERVER_ERROR',
+        message: 'Unknown error'
+      })
+    }
   })
 
-  app.get('/rides', (req, res) => {
-    /*
-    #swagger.tags = ['Rides']
-    #swagger.description = 'Endpoint to list all rides.'
-    #swagger.parameters['page'] = { description: 'Page number to query',type:'number' }
-    #swagger.parameters['limit'] = { description: 'Result limit per page to query',type:'number' }
-    */
-    const { page = 1, limit = 10 } = req.query
-    if (isNaN(page) || page < 1) {
-      return res.send({
-        error_code: 'INVALID_PAGE_NUMBER',
-        message: 'Page number should be a number and not be less than 1'
-      })
-    }
-    if (isNaN(limit) || limit < 1 || limit >= 1000) {
-      return res.send({
-        error_code: 'INVALID_PAGE_LIMIT_NUMBER',
-        message:
-          'Page limit number should be a number and not be less than 1, and must not greater than 1000'
-      })
-    }
-    const offset = (page - 1) * limit // SQLite offset is last row of last page
-    db.all(
-      'SELECT * FROM Rides LIMIT ? OFFSET ?',
-      [limit, offset],
-      function (err, rows) {
-        if (err) {
-          return res.send({
-            error_code: 'SERVER_ERROR',
-            message: 'Unknown error'
-          })
-        }
-
-        if (rows.length === 0) {
-          return res.send({
-            error_code: 'RIDES_NOT_FOUND_ERROR',
-            message: 'Could not find any rides'
-          })
-        }
-        db.all('SELECT COUNT(*) as count FROM Rides', (err, countRow) => {
-          if (err) {
-            throw err
-          }
-          const totalCount = countRow[0].count
-          res.send({
-            hasNext: Number(page) * Number(limit) < Number(totalCount),
-            totalCount: Number(totalCount),
-            currentPage: Number(page),
-            results: rows
-          })
-          /* #swagger.responses[200] = {
-            description: 'Query all rides with pagination success.',
-            schema: {$ref: '#/definitions/rides'}
-          } */
+  app.get('/rides', async (req, res) => {
+    try {
+      /*
+      #swagger.tags = ['Rides']
+      #swagger.description = 'Endpoint to list all rides.'
+      #swagger.parameters['page'] = { description: 'Page number to query',type:'number' }
+      #swagger.parameters['limit'] = { description: 'Result limit per page to query',type:'number' }
+      */
+      const { page = 1, limit = 10 } = req.query
+      if (isNaN(page) || page < 1) {
+        return res.send({
+          error_code: 'INVALID_PAGE_NUMBER',
+          message: 'Page number should be a number and not be less than 1'
         })
       }
-    )
+      if (isNaN(limit) || limit < 1 || limit >= 1000) {
+        return res.send({
+          error_code: 'INVALID_PAGE_LIMIT_NUMBER',
+          message:
+            'Page limit number should be a number and not be less than 1, and must not greater than 1000'
+        })
+      }
+      const offset = (page - 1) * limit // SQLite offset is last row of last page
+      const result = await repository.list(limit, offset)
+      if (result.length === 0) {
+        return res.send({
+          error_code: 'RIDES_NOT_FOUND_ERROR',
+          message: 'Could not find any rides'
+        })
+      }
+      const totalCount = await repository.count()
+      res.send({
+        hasNext: Number(page) * Number(limit) < Number(totalCount),
+        totalCount: Number(totalCount),
+        currentPage: Number(page),
+        results: result
+      })
+      /* #swagger.responses[200] = {
+      description: 'Query all rides with pagination success.',
+      schema: {$ref: '#/definitions/rides'}
+    } */
+    } catch (error) {
+      return res.send({
+        error_code: 'SERVER_ERROR',
+        message: 'Unknown error'
+      })
+    }
   })
 
-  app.get('/rides/:id', (req, res) => {
+  app.get('/rides/:id', async (req, res) => {
     /*
     #swagger.tags = ['Rides']
     #swagger.description = 'Endpoint to return ride by ID.'
@@ -181,29 +153,25 @@ module.exports = (db) => {
                 required: true
             }
     */
-    db.all(
-      `SELECT * FROM Rides WHERE rideID='${req.params.id}'`,
-      function (err, rows) {
-        if (err) {
-          return res.send({
-            error_code: 'SERVER_ERROR',
-            message: 'Unknown error'
-          })
-        }
-
-        if (rows.length === 0) {
-          return res.send({
-            error_code: 'RIDES_NOT_FOUND_ERROR',
-            message: 'Could not find any rides'
-          })
-        }
-        /* #swagger.responses[200] = {
-            description: 'Query ride by id success.',
-            schema: {$ref: '#/definitions/ride'}
-          } */
-        res.send(rows)
+    try {
+      const rides = await repository.getByID(req.params.id)
+      if (rides.length === 0) {
+        return res.send({
+          error_code: 'RIDES_NOT_FOUND_ERROR',
+          message: 'Could not find any rides'
+        })
       }
-    )
+      //     /* #swagger.responses[200] = {
+      //         description: 'Query ride by id success.',
+      //         schema: {$ref: '#/definitions/ride'}
+      //       } */
+      return res.send(rides)
+    } catch (error) {
+      return res.send({
+        error_code: 'SERVER_ERROR',
+        message: 'Unknown error'
+      })
+    }
   })
 
   middleware.errorLogging(app)
