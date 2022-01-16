@@ -9,7 +9,7 @@
   "scripts": {
     "coverage": "nyc npm run test",
     "lint": "eslint --fix .",
-    "test": "nyc mocha tests",
+    "test": "nyc mocha tests --reporter mocha-multi-reporters --reporter-options configFile=.multi.json",
     "start": "node index.js",
     "test:load": "artillery run load-test.yml",
     "swagger-autogen": "node ./swagger.js"
@@ -41,6 +41,8 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^5.2.0",
     "mocha": "^6.1.4",
+    "mocha-junit-reporter": "^2.0.2",
+    "mocha-multi-reporters": "^1.5.1",
     "nyc": "^15.1.0",
     "pre-push": "^0.1.1",
     "supertest": "^4.0.2",
