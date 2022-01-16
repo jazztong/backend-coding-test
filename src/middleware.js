@@ -3,17 +3,12 @@
 const winston = require('winston')
 const expressWinston = require('express-winston')
 const helmet = require('helmet')
-const transports = [
-  new winston.transports.Console(),
-  new winston.transports.File({
-    filename: 'request.log'
-  })
-]
+const logger = require('./logger')
 module.exports.enableSecureHeader = (app) => app.use(helmet())
 module.exports.requestLogging = (app) =>
   app.use(
     expressWinston.logger({
-      transports: transports,
+      winstonInstance: logger,
       format: winston.format.combine(
         winston.format.colorize(),
         winston.format.json()
@@ -31,7 +26,7 @@ module.exports.requestLogging = (app) =>
 module.exports.errorLogging = (app) =>
   app.use(
     expressWinston.errorLogger({
-      transports: transports,
+      winstonInstance: logger,
       format: winston.format.combine(
         winston.format.colorize(),
         winston.format.json()
